@@ -3417,7 +3417,7 @@ function SignatureUI:_build()
 
 		local bar = mk("Frame", {
 			Position = UDim2.new(0, 10, 0, 12),
-			Size = UDim2.new(0, 4, 1, -35),
+			Size = UDim2.new(0, 4, 1, -45),
 			BackgroundColor3 = color,
 			BackgroundTransparency = 0.06,
 			BorderSizePixel = 0,
