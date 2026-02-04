@@ -430,14 +430,14 @@ end
 --==============================================================
 local function derivePalette(THEME)
 	return {
-		Deep = lerpColor(THEME.PANEL_2, Color3.new(0,0,0), 0.25),
-		Ink = lerpColor(THEME.PANEL_2, THEME.BG, 0.18),
+		Deep = lerpColor(THEME.PANEL_2, Color3.new(0.454902, 0.454902, 0.454902), 0.25),
+		Ink = lerpColor(THEME.PANEL_2, Color3.fromRGB(175, 195, 255), 0.18),
 		Glass = lerpColor(THEME.PANEL, THEME.PANEL_2, 0.35),
 		Glass2 = lerpColor(THEME.PANEL, THEME.BG, 0.20),
-		EdgeDark = lerpColor(THEME.STROKE, Color3.new(0,0,0), 0.55),
+		EdgeDark = lerpColor(THEME.STROKE, Color3.new(0.294118, 0.294118, 0.294118), 0.55),
 		EdgeLite = lerpColor(THEME.STROKE, THEME.ACCENT_3, 0.22),
 		Highlight = lerpColor(THEME.ACCENT_3, Color3.new(1,1,1), 0.30),
-		MoonDark = Color3.fromRGB(45, 48, 60),
+		MoonDark = Color3.fromRGB(93, 98, 119),
 	}
 end
 
@@ -1003,10 +1003,10 @@ function SignatureUI:_build()
 	self._stars = stars
 	self._lines = lines
 
-	local STAR_DOT_COLOR  = Color3.fromRGB(140, 150, 190)
-	local STAR_CORE_COLOR = Color3.fromRGB(140, 150, 190)
-	local STAR_GLOW_COLOR = Color3.fromRGB(140, 150, 190)
-	local LINE_COLOR      = Color3.fromRGB(140, 150, 190)
+	local STAR_DOT_COLOR  = Color3.fromRGB(120, 155, 255)
+	local STAR_CORE_COLOR = Color3.fromRGB(120, 155, 255)
+	local STAR_GLOW_COLOR = Color3.fromRGB(120, 155, 255)
+	local LINE_COLOR      = Color3.fromRGB(120, 155, 255)
 
 	local function makeStar(i)
 		local size = self._rng:NextInteger(3, 6)
