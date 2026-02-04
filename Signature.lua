@@ -282,7 +282,7 @@ local DEFAULT_THEME = {
 
 	ACCENT   = Color3.fromRGB(175, 195, 255),
 	ACCENT_2 = Color3.fromRGB(120, 155, 255),
-	ACCENT_3 = Color3.fromRGB(220, 230, 255),
+	ACCENT_3 = Color3.fromRGB(255, 220, 220),
 
 	DANGER  = Color3.fromRGB(255, 110, 120),
 	SUCCESS = Color3.fromRGB(140, 255, 200),
@@ -3311,7 +3311,7 @@ function SignatureUI:_build()
 	end
 
 	local CancelBtn = pill("Cancel")
-	local OkBtn = pill("OK", THEME.ACCENT_3)
+	local OkBtn = pill("OK", THEME.DANGER)
 
 	self._modalYes = nil
 	self._modalNo = nil
