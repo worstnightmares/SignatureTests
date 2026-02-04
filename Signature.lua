@@ -1003,10 +1003,10 @@ function SignatureUI:_build()
 	self._stars = stars
 	self._lines = lines
 
-	local STAR_DOT_COLOR  = Color3.fromRGB(95, 104, 130)
-	local STAR_CORE_COLOR = Color3.fromRGB(95, 104, 130)
-	local STAR_GLOW_COLOR = Color3.fromRGB(111, 117, 138)
-	local LINE_COLOR      = Color3.fromRGB(85, 93, 116)
+	local STAR_DOT_COLOR  = Color3.fromRGB(140, 150, 190)
+	local STAR_CORE_COLOR = Color3.fromRGB(140, 150, 190)
+	local STAR_GLOW_COLOR = Color3.fromRGB(140, 150, 190)
+	local LINE_COLOR      = Color3.fromRGB(140, 150, 190)
 
 	local function makeStar(i)
 		local size = self._rng:NextInteger(3, 6)
