@@ -662,11 +662,24 @@ end
 -- Public: Tab
 --==============================================================
 function SignatureUI:Tab(name, icon)
-	assert(type(name) == "string" and name ~= "", "Tab name must be a string")
-	if self._tabs[name] then
-		return self._tabs[name].api
-	end
-	return self:_createTab(name, icon or "•")
+    assert(type(name) == "string" and name ~= "", "Tab name must be a string")
+    if self._tabs[name] then
+        return self._tabs[name].api
+    end
+
+    local f = self._factory
+    return self:_createTab(
+        name,
+        icon or "•",
+        nil,
+        f and f.TabsStack,
+        f and f.makePage,
+        f and f.makeButton,
+        f and f.makeToggle,
+        f and f.makeSlider,
+        f and f.makeDropdown,
+        f and f.makeColorPicker
+    )
 end
 
 --==============================================================
@@ -1168,7 +1181,7 @@ function SignatureUI:_build()
 		TextSize = 12,
 		TextColor3 = lerpColor(THEME.MUTED, THEME.SOFT, 0.20),
 		TextXAlignment = Enum.TextXAlignment.Left,
-		Text = tostring(C.Version) .. "  •  lunar noir AAA",
+		Text = tostring(C.Version) .. "  • coder & owner: @luaudocumentation discord",
 		ZIndex = 160,
 	})
 	BrandSub.Parent = TopBarSafe
@@ -1602,7 +1615,7 @@ function SignatureUI:_build()
 	self._pages = {}
 	self._selectedTab = nil
 	self._searchMode = false
-	self._lastTabBeforeSearch = "Home"
+	self._lastTabBeforeSearch = nil
 	self._sidebarCollapsed = false
 
 	--==========================================================
@@ -3061,6 +3074,7 @@ function SignatureUI:_build()
 		end
 	end
 
+
 	--==========================================================
 	-- Page helper
 	--==========================================================
@@ -3091,6 +3105,18 @@ function SignatureUI:_build()
 		addList(scroll, 12)
 		return page, scroll
 	end
+
+			-- store factories so ui:Tab() can create tabs later even if DefaultTabs is empty
+	self._factory = {
+		TabsStack = TabsStack,
+		makePage = makePage,
+		makeButton = makeButton,
+		makeToggle = makeToggle,
+		makeSlider = makeSlider,
+		makeDropdown = makeDropdown,
+		makeColorPicker = makeColorPicker,
+	}
+	
 
 	-- Search results page
 	local SearchPage, SearchScroll = makePage("__Search")
@@ -3541,7 +3567,15 @@ function SignatureUI:_build()
 	local function showOnlySearchPage(show)
 		self._searchMode = show
 		if show then
-			self._lastTabBeforeSearch = self._selectedTab or "Home"
+			-- remember the real current tab; fallback to first existing tab if none selected yet
+			local fallback = nil
+			for tabName in pairs(self._pages) do
+				if tabName ~= "__Search" then
+					fallback = tabName
+					break
+				end
+			end
+			self._lastTabBeforeSearch = self._selectedTab or self._lastTabBeforeSearch or fallback
 			CurrentTabTitle.Text = "Search"
 			SearchPage.Visible = true
 			SearchPage.GroupTransparency = 1
@@ -3573,7 +3607,19 @@ function SignatureUI:_build()
 		if q == "" then
 			lastAppliedQuery = ""
 			showOnlySearchPage(false)
-			self:_setTab(self._lastTabBeforeSearch or self._selectedTab, true)
+
+			local back = self._lastTabBeforeSearch or self._selectedTab
+			if back and self._pages[back] then
+				self:_setTab(back, true)
+			else
+				-- fallback to any existing tab
+				for tabName in pairs(self._pages) do
+					if tabName ~= "__Search" then
+						self:_setTab(tabName, true)
+						break
+					end
+				end
+			end
 			return
 		end
 
