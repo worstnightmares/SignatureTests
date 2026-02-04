@@ -429,15 +429,25 @@ end
 -- Design primitives (lunar glass)
 --==============================================================
 local function derivePalette(THEME)
+	local moonBase = lerpColor(THEME.PANEL_2, THEME.PANEL, 0.22)
+	local moonHi   = lerpColor(moonBase, THEME.ACCENT, 0.10)
+	local moonLo   = lerpColor(moonBase, Color3.new(0,0,0), 0.40)
+
 	return {
-		Deep = lerpColor(THEME.PANEL_2, Color3.new(0.454902, 0.454902, 0.454902), 0.25),
-		Ink = lerpColor(THEME.PANEL_2, Color3.fromRGB(175, 195, 255), 0.18),
+		Deep = lerpColor(THEME.PANEL_2, Color3.fromRGB(119, 126, 155), 0.25),
+
+		Ink = lerpColor(THEME.PANEL_2, THEME.BG, 0.18),
 		Glass = lerpColor(THEME.PANEL, THEME.PANEL_2, 0.35),
 		Glass2 = lerpColor(THEME.PANEL, THEME.BG, 0.20),
-		EdgeDark = lerpColor(THEME.STROKE, Color3.new(0.294118, 0.294118, 0.294118), 0.55),
+		EdgeDark = lerpColor(THEME.STROKE, Color3.new(0,0,0), 0.55),
 		EdgeLite = lerpColor(THEME.STROKE, THEME.ACCENT_3, 0.22),
 		Highlight = lerpColor(THEME.ACCENT_3, Color3.new(1,1,1), 0.30),
-		MoonDark = Color3.fromRGB(93, 98, 119),
+
+		MoonBase = moonBase,
+		MoonHi = moonHi,
+		MoonLo = moonLo,
+
+		MoonDark = moonBase,
 	}
 end
 
@@ -899,7 +909,7 @@ function SignatureUI:_build()
 		AnchorPoint = Vector2.new(1, 0),
 		Position = UDim2.new(1, -70, 0, 70),
 		Size = UDim2.new(0, C.MoonSize, 0, C.MoonSize),
-		BackgroundColor3 = PALETTE.MoonDark,
+		BackgroundColor3 = PALETTE.MoonBase,
 		BackgroundTransparency = C.MoonTransparency,
 		BorderSizePixel = 0,
 		ZIndex = 4,
@@ -908,9 +918,9 @@ function SignatureUI:_build()
 	addCornerRound(Moon)
 	addGradient(Moon, -35,
 		ColorSequence.new({
-			ColorSequenceKeypoint.new(0, Color3.fromRGB(55, 58, 72)),
-			ColorSequenceKeypoint.new(0.55, Color3.fromRGB(38, 40, 52)),
-			ColorSequenceKeypoint.new(1, Color3.fromRGB(26, 28, 36)),
+			ColorSequenceKeypoint.new(0, PALETTE.MoonHi),
+			ColorSequenceKeypoint.new(0.55, PALETTE.MoonBase),
+			ColorSequenceKeypoint.new(1, PALETTE.MoonLo),
 		}),
 		NumberSequence.new({
 			NumberSequenceKeypoint.new(0, 0.10),
@@ -941,7 +951,7 @@ function SignatureUI:_build()
 			AnchorPoint = Vector2.new(0.5, 0.5),
 			Position = UDim2.fromScale(x, y),
 			Size = UDim2.new(0, sizePx, 0, sizePx),
-			BackgroundColor3 = Color3.fromRGB(28, 30, 38),
+			BackgroundColor3 = lerpColor(PALETTE.MoonLo, THEME.PANEL_2, 0.20),
 			BackgroundTransparency = tr,
 			BorderSizePixel = 0,
 			ZIndex = 6,
@@ -949,8 +959,8 @@ function SignatureUI:_build()
 		addCornerRound(c)
 		addGradient(c, -25,
 			ColorSequence.new({
-				ColorSequenceKeypoint.new(0, Color3.fromRGB(70, 74, 92)),
-				ColorSequenceKeypoint.new(1, Color3.fromRGB(22, 24, 31)),
+				ColorSequenceKeypoint.new(0, lerpColor(PALETTE.MoonHi, Color3.new(1,1,1), 0.08)),
+				ColorSequenceKeypoint.new(1, lerpColor(PALETTE.MoonLo, Color3.new(0,0,0), 0.10)),
 			}),
 			NumberSequence.new({
 				NumberSequenceKeypoint.new(0, 0.85),
@@ -1003,10 +1013,10 @@ function SignatureUI:_build()
 	self._stars = stars
 	self._lines = lines
 
-	local STAR_DOT_COLOR  = Color3.fromRGB(120, 155, 255)
-	local STAR_CORE_COLOR = Color3.fromRGB(120, 155, 255)
-	local STAR_GLOW_COLOR = Color3.fromRGB(120, 155, 255)
-	local LINE_COLOR      = Color3.fromRGB(120, 155, 255)
+	local STAR_DOT_COLOR  = lerpColor(THEME.SOFT, THEME.ACCENT, 0.20)
+	local STAR_CORE_COLOR = lerpColor(THEME.ACCENT_3, THEME.SOFT, 0.25)
+	local STAR_GLOW_COLOR = lerpColor(THEME.ACCENT, PALETTE.Glass2, 0.25)
+	local LINE_COLOR      = lerpColor(THEME.STROKE, THEME.ACCENT, 0.32)
 
 	local function makeStar(i)
 		local size = self._rng:NextInteger(3, 6)
@@ -3417,7 +3427,7 @@ function SignatureUI:_build()
 
 		local bar = mk("Frame", {
 			Position = UDim2.new(0, 10, 0, 12),
-			Size = UDim2.new(0, 4, 1, -45),
+			Size = UDim2.new(0, 4, 1, -35),
 			BackgroundColor3 = color,
 			BackgroundTransparency = 0.06,
 			BorderSizePixel = 0,
