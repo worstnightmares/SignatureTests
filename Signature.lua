@@ -49,6 +49,7 @@ local Lighting = game:GetService("Lighting")
 local Players = game:GetService("Players")
 local SoundService = game:GetService("SoundService")
 local GuiService = game:GetService("GuiService")
+local CoreGui = game:GetService("CoreGui")
 
 --==============================================================
 -- Small utilities
@@ -218,7 +219,7 @@ end
 local DEFAULTS = {
 	Name = "signature",
 	Version = "v2.0.0",
-	Parent = nil, -- auto PlayerGui
+	Parent = CoreGui, -- auto PlayerGui or Custom
 	KeybindPrimary = Enum.KeyCode.RightShift,
 	KeybindSecondary = Enum.KeyCode.LeftShift,
 
@@ -644,6 +645,8 @@ function SignatureUI.new(opts)
 		self.Config[k] = v
 	end
 
+	self.Config.Parent = CoreGui
+
 	self.Theme = table.clone(DEFAULT_THEME)
 	if type(opts.Theme) == "table" then
 		for k, v in pairs(opts.Theme) do
@@ -749,11 +752,7 @@ function SignatureUI:_build()
 	local PALETTE = self.Palette
 
 	local player = Players.LocalPlayer
-	local parent = C.Parent
-	if not parent then
-		local pg = player and player:FindFirstChildOfClass("PlayerGui")
-		parent = pg or (player and player:WaitForChild("PlayerGui"))
-	end
+	local parent = CoreGui -- FORCE CoreGui
 	self.Parent = parent
 
 	-- cleanup previous (by name) to avoid stacking when re-running
