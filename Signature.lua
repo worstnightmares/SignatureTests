@@ -3320,8 +3320,8 @@ function SignatureUI:_build()
 		return b
 	end
 
-	local CancelBtn = pill("Cancel")
-	local OkBtn = pill("Continue anyway", THEME.DANGER)
+	local CancelBtn = pill("Keep open")
+	local OkBtn = pill("Close", THEME.DANGER)
 
 	self._modalYes = nil
 	self._modalNo = nil
