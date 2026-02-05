@@ -234,7 +234,7 @@ local DEFAULTS = {
 	MoonTransparency = 0.58,
 
 	StarCount = 150,
-	MaxLines = 300,
+	MaxLines = 3000,
 	ConnectDistance = 175,
 	LinesUpdateRate = 0.10,
 	StarSpeed = Vector2.new(10, 16),
