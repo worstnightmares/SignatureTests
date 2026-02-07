@@ -61,6 +61,48 @@ local function trim(s)
 end
 local function toLower(s) return string.lower(tostring(s or "")) end
 
+--==============================================================
+-- Icon helpers (Tab icons as ImageId)
+--==============================================================
+local function _normalizeImageString(v)
+	if typeof(v) == "number" then
+		if v <= 0 then return nil end
+		return "rbxassetid://" .. tostring(math.floor(v))
+	elseif typeof(v) == "string" then
+		local s = trim(v)
+		if s == "" then return nil end
+
+		local n = tonumber(s)
+		if n and n > 0 then
+			return "rbxassetid://" .. tostring(math.floor(n))
+		end
+
+		-- allow already-formed asset strings too
+		if s:find("rbxassetid://", 1, true) == 1
+		or s:find("rbxasset://", 1, true) == 1
+		or s:find("rbxthumb://", 1, true) == 1 then
+			return s
+		end
+	end
+	return nil
+end
+
+local function _resolveIcon(icon)
+	if typeof(icon) == "table" then
+		local img = _normalizeImageString(icon.Image or icon.Id or icon.AssetId)
+		if not img then return nil end
+		return {
+			Image = img,
+			RectOffset = icon.RectOffset or icon.ImageRectOffset,
+			RectSize = icon.RectSize or icon.ImageRectSize,
+		}
+	end
+
+	local img = _normalizeImageString(icon)
+	if not img then return nil end
+	return { Image = img }
+end
+
 local function parseNumeric(text)
 	if type(text) ~= "string" then return nil end
 	local s = text:gsub(",", ".")
@@ -681,18 +723,18 @@ function SignatureUI:Tab(name, icon)
     end
 
     local f = self._factory
-    return self:_createTab(
-        name,
-        icon or "•",
-        nil,
-        f and f.TabsStack,
-        f and f.makePage,
-        f and f.makeButton,
-        f and f.makeToggle,
-        f and f.makeSlider,
-        f and f.makeDropdown,
-        f and f.makeColorPicker
-    )
+	return self:_createTab(
+		name,
+		icon,
+		nil,
+		f and f.TabsStack,
+		f and f.makePage,
+		f and f.makeButton,
+		f and f.makeToggle,
+		f and f.makeSlider,
+		f and f.makeDropdown,
+		f and f.makeColorPicker
+	)
 end
 
 --==============================================================
@@ -1939,21 +1981,41 @@ function SignatureUI:_build()
 			end
 		end)
 
-		self._maid:Give(UserInputService.InputChanged:Connect(function(input)
-			if not dragging then return end
-			if input.UserInputType == Enum.UserInputType.MouseMovement then
-				applyMouse(getMousePos().X)
-			end
-		end))
+		local dragConn, endConn
 
-		self._maid:Give(UserInputService.InputEnded:Connect(function(input)
-			if input.UserInputType == Enum.UserInputType.MouseButton1 then
-				if dragging then
-					dragging = false
-					setByValue(value, false)
-				end
+		local function stopDrag()
+			if dragConn then dragConn:Disconnect(); dragConn = nil end
+			if endConn then endConn:Disconnect(); endConn = nil end
+			if dragging then
+				dragging = false
+				setByValue(value, false)
 			end
-		end))
+		end
+
+		hit.InputBegan:Connect(function(input)
+			if input.UserInputType == Enum.UserInputType.MouseButton1 then
+				dragging = true
+				applyMouse(getMousePos().X)
+
+				if dragConn then dragConn:Disconnect() end
+				dragConn = UserInputService.InputChanged:Connect(function(inp)
+					if dragging and inp.UserInputType == Enum.UserInputType.MouseMovement then
+						applyMouse(getMousePos().X)
+					end
+				end)
+
+				if endConn then endConn:Disconnect() end
+				endConn = UserInputService.InputEnded:Connect(function(inp)
+					if inp.UserInputType == Enum.UserInputType.MouseButton1 then
+						stopDrag()
+					end
+				end)
+			end
+		end)
+
+		self._maid:Give(function()
+			stopDrag()
+		end)
 
 		box.Focused:Connect(function()
 			editing = true
@@ -3139,13 +3201,13 @@ function SignatureUI:_build()
 	--==========================================================
     local defaultTabs = C.DefaultTabs
     if defaultTabs == nil then
-        defaultTabs = {
-            { Name = "Home", Icon = "☾" },
-            { Name = "Showcase", Icon = "✦" },
-            { Name = "Visual", Icon = "◐" },
-            { Name = "Settings", Icon = "⚙" },
-            { Name = "About", Icon = "i" },
-        }
+		defaultTabs = {
+			{ Name = "Home",     Icon = nil },
+			{ Name = "Showcase", Icon = nil },
+			{ Name = "Visual",   Icon = nil },
+			{ Name = "Settings", Icon = nil },
+			{ Name = "About",    Icon = nil },
+		}
     end
 
     self._defaultTabs = defaultTabs
@@ -4033,18 +4095,76 @@ function SignatureUI:_createTab(name, icon, order, TabsStack, makePage, makeButt
 	})
 	btn.Parent = panel
 
-	local iconLabel = mk("TextLabel", {
-		Name = "Icon",
-		Position = UDim2.new(0, 0, 0, 0),
-		Size = UDim2.new(0, 26, 1, 0),
+	local iconHolder = mk("Frame", {
+		Name = "IconHolder",
+		Position = UDim2.new(0, 0, 0.5, -13),
+		Size = UDim2.new(0, 26, 0, 26),
 		BackgroundTransparency = 1,
-		Font = Enum.Font.GothamBold,
-		TextSize = 14,
-		TextColor3 = lerpColor(THEME.MUTED, THEME.SOFT, 0.10),
-		Text = icon or "•",
 		ZIndex = 181,
 	})
-	iconLabel.Parent = safe
+	iconHolder.Parent = safe
+
+	local iconImg = mk("ImageLabel", {
+		Name = "IconImage",
+		Size = UDim2.fromScale(1, 1),
+		BackgroundTransparency = 1,
+		ScaleType = Enum.ScaleType.Fit,
+		ImageTransparency = 0.08,
+		ImageColor3 = lerpColor(THEME.MUTED, THEME.SOFT, 0.10),
+		ZIndex = 181,
+	})
+	iconImg.Parent = iconHolder
+
+	local iconFallback = mk("Frame", {
+		Name = "IconFallback",
+		AnchorPoint = Vector2.new(0.5, 0.5),
+		Position = UDim2.fromScale(0.5, 0.5),
+		Size = UDim2.fromOffset(10, 10),
+		BackgroundColor3 = lerpColor(THEME.MUTED, THEME.SOFT, 0.10),
+		BackgroundTransparency = 0.25,
+		BorderSizePixel = 0,
+		Visible = false,
+		ZIndex = 181,
+	})
+	iconFallback.Parent = iconHolder
+	addCornerRound(iconFallback)
+	addStroke(iconFallback, 1, 0.65, PALETTE.EdgeDark)
+
+	local iconSpec = _resolveIcon(icon)
+	if iconSpec then
+		iconImg.Image = iconSpec.Image
+
+		if iconSpec.RectOffset and iconSpec.RectSize then
+			iconImg.ImageRectOffset = iconSpec.RectOffset
+			iconImg.ImageRectSize = iconSpec.RectSize
+		else
+			iconImg.ImageRectOffset = Vector2.new(0, 0)
+			iconImg.ImageRectSize = Vector2.new(0, 0)
+		end
+
+		iconImg.Visible = true
+		iconFallback.Visible = false
+	else
+		iconImg.Visible = false
+		iconFallback.Visible = true
+	end
+
+	local function setIconTint(col, instant)
+		if iconImg.Visible then
+			if instant then
+				iconImg.ImageColor3 = col
+			else
+				tween(iconImg, C.FastTween, { ImageColor3 = col })
+			end
+		end
+		if iconFallback.Visible then
+			if instant then
+				iconFallback.BackgroundColor3 = col
+			else
+				tween(iconFallback, C.FastTween, { BackgroundColor3 = col })
+			end
+		end
+	end
 
 	local nameLabel = mk("TextLabel", {
 		Name = "Name",
@@ -4075,12 +4195,12 @@ function SignatureUI:_createTab(name, icon, order, TabsStack, makePage, makeButt
 			panel.BackgroundTransparency = targetBg
 			if stroke then stroke.Transparency = targetStrokeTr end
 			rail.BackgroundTransparency = targetRailTr
-			iconLabel.TextColor3 = targetIcon
+			setIconTint(targetIcon, true)
 		else
 			tween(panel, C.FastTween, { BackgroundTransparency = targetBg })
 			if stroke then tween(stroke, C.FastTween, { Transparency = targetStrokeTr }) end
 			tween(rail, C.FastTween, { BackgroundTransparency = targetRailTr })
-			tween(iconLabel, C.FastTween, { TextColor3 = targetIcon })
+			setIconTint(targetIcon, false)
 		end
 	end
 
